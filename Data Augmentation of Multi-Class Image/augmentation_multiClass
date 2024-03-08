@@ -1,0 +1,55 @@
+import os
+import cv2
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Parent folder containing 35 class folders
+parent_folder = 'I:\\DataInBrief_without-husk\\Rice Image'
+
+# Output folder for augmented images
+output_folder = 'I:\\DataInBrief_without-husk\\augment'
+
+# Create the output folder if it doesn't exist
+os.makedirs(output_folder, exist_ok=True)
+
+# Create an ImageDataGenerator for augmentation
+datagen = ImageDataGenerator(
+    rotation_range=30,  # Adjusted rotation range
+    shear_range = 0.2,
+    vertical_flip=True,  # Flip the image up and down
+    horizontal_flip=True,
+   
+      # Flip the image horizontally
+      #1 random
+
+
+)
+
+# Function to apply augmentation to a single image and save the augmented images
+def augment_and_save(image_path, output_folder, num_augmentations=4):  # Maximum of 4 images per original image
+    img = cv2.imread(image_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    
+    # Reshape the image to (1, height, width, channels) for the generator
+    img = img.reshape((1,) + img.shape)
+
+    # Create the generator
+    aug_iter = datagen.flow(img, batch_size=1)
+
+    # Apply augmentation and save the images
+    for i in range(num_augmentations):
+        augmented_img = aug_iter.next()[0]
+        augmented_img_path = os.path.join(output_folder, f"augmented_{i+1}_{os.path.basename(image_path)}")
+        cv2.imwrite(augmented_img_path, cv2.cvtColor(augmented_img, cv2.COLOR_RGB2BGR))
+
+# Iterate over each class folder
+for class_folder in os.listdir(parent_folder):
+    class_folder_path = os.path.join(parent_folder, class_folder)
+    
+    # Create the corresponding output folder for augmented images
+    class_output_folder = os.path.join(output_folder, class_folder)
+    os.makedirs(class_output_folder, exist_ok=True)
+    
+    # Iterate over each image in the class folder
+    for filename in os.listdir(class_folder_path):
+        image_path = os.path.join(class_folder_path, filename)
+        augment_and_save(image_path, class_output_folder)
